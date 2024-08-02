@@ -10,3 +10,4 @@ serde_json = "1.0.120"
 serde={version="1.0.204",features=["derive"]}
 tokio={version="1",features=["full"]}
 rumqttc = "0.24.0"
+rust_socketio = {version="0.6.0",features=["async"]}

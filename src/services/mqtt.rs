@@ -2,8 +2,10 @@
 use rumqttc::{AsyncClient, ClientError as MQTTError, EventLoop, MqttOptions,QoS,Publish};
 use std::time::Duration;
 use std::env;
+use serde_json::json;
 
 use crate::services::db::DBService;
+use crate::services::socket::SocketService;
 use crate::models::temp_sensor::{TempSensorData,TempSensorDataRequest};
 
 pub struct MQTTService {
@@ -36,7 +38,7 @@ impl MQTTService {
         });
     }
 
-    pub async fn handler(&self,db:&DBService,packete:Publish)->Result<(),Box<dyn std::error::Error>> {
+    pub async fn handler(&self,db:&DBService,socket:&SocketService,packete:Publish)->Result<(),Box<dyn std::error::Error>> {
         // let topic=packete.topic.as_str();
         let message=String::from_utf8(packete.payload.to_vec())?;
 
@@ -45,8 +47,11 @@ impl MQTTService {
         let temp_sensor_data=TempSensorData::try_from(temp_sensor_request)?;
 
         db.insert_temp_data(temp_sensor_data).await?;
-        
 
+        socket.socket.emit("sensor/tmp",json!({
+            "tmp":message
+        })).await?;
+        
         return Ok(());
     }
  }
